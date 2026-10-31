@@ -25,16 +25,18 @@ local defaults = {
     password = vim.env.OPENCODE_SERVER_PASSWORD,
     -- v2+: server = "opencode serve --port", TUI = "opencode"
     start = function()
-      require("opencode.terminal").open("opencode serve --port 4096", {
+      require("snacks.terminal").open("opencode serve --port 4096", {
         split = "right",
         width = math.floor(vim.o.columns * 0.35),
       })
     end,
     stop = function()
-      require("opencode.terminal").close()
+      -- snacks.terminal doesn't have a simple close for specific cmd, use toggle to close
+      local term = require("snacks.terminal").get("opencode serve --port 4096", { create = false })
+      if term then term:close() end
     end,
     toggle = function()
-      require("opencode.terminal").toggle("opencode serve --port 4096", {
+      require("snacks.terminal").toggle("opencode serve --port 4096", {
         split = "right",
         width = math.floor(vim.o.columns * 0.35),
       })
