@@ -110,4 +110,29 @@ end
 
 M.format = require("opencode.context").format
 
+---Toggle the interactive OpenCode TUI (terminal UI).
+---Opens `opencode` CLI directly in a terminal, not the server.
+function M.tui_toggle()
+  require("opencode.terminal").toggle("opencode", {
+    split = "right",
+    width = math.floor(vim.o.columns * 0.35),
+  })
+end
+
+---Open the interactive OpenCode TUI (terminal UI).
+function M.tui_open()
+  require("opencode.terminal").open("opencode", {
+    split = "right",
+    width = math.floor(vim.o.columns * 0.35),
+  })
+end
+
+---Close the interactive OpenCode TUI terminal.
+function M.tui_close()
+  local term = require("opencode.terminal").get("opencode", { create = false })
+  if term then
+    term:close()
+  end
+end
+
 return M

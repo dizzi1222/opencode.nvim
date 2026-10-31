@@ -23,8 +23,21 @@ local defaults = {
     connect = true,
     username = vim.env.OPENCODE_SERVER_USERNAME or "opencode", -- Same env vars and defaults as OpenCode
     password = vim.env.OPENCODE_SERVER_PASSWORD,
+    -- v2+: server = "opencode serve --port", TUI = "opencode"
     start = function()
-      vim.cmd("vsplit term://opencode --port | wincmd p")
+      require("opencode.terminal").open("opencode serve --port 4096", {
+        split = "right",
+        width = math.floor(vim.o.columns * 0.35),
+      })
+    end,
+    stop = function()
+      require("opencode.terminal").close()
+    end,
+    toggle = function()
+      require("opencode.terminal").toggle("opencode serve --port 4096", {
+        split = "right",
+        width = math.floor(vim.o.columns * 0.35),
+      })
     end,
   },
   contexts = {
