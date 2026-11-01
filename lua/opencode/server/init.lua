@@ -267,22 +267,48 @@ function Server:get_sessions()
   end)
 end
 
----Resolve the session to target for this Neovim instance: the most recently
----updated root session for the current directory.
+---Most recent root sessions across all directories.
 ---
----Resolved on every call; never cached. See the README for the documented ordering.
+---@return Promise<opencode.server.Session[]>
+function Server:get_all_sessions()
+  local Promise = require("opencode.promise")
+  return self:request("/api/session?order=desc&parentID=null", "GET"):next(function(response)
+    return Promise.resolve(response and response.data or {})
+  end)
+end
+
+---Resolve the session to target for this Neovim instance: the most recently
+---updated root session for the current directory, falling back to the most
+---recent root session in any directory (e.g. a global TUI opened in `$HOME`).
+---
+---Resolved on every call; never cached.
 ---
 ---@return Promise<opencode.server.Session>
 function Server:resolve_session()
   local Promise = require("opencode.promise")
-  return self:get_sessions():next(function(sessions)
+
+  local function first_unarchived(sessions)
     for _, session in ipairs(sessions) do
       if not (session.time and session.time.archived) then
-        return Promise.resolve(session)
+        return session
       end
     end
+  end
 
-    return Promise.reject("No OpenCode session found for `" .. vim.fn.getcwd() .. "`. Start one in the TUI.")
+  return self:get_sessions():next(function(sessions)
+    local session = first_unarchived(sessions)
+    if session then
+      return Promise.resolve(session)
+    end
+
+    -- Reuse the global TUI's session when this project has none yet.
+    return self:get_all_sessions():next(function(all_sessions)
+      local fallback = first_unarchived(all_sessions)
+      if fallback then
+        return Promise.resolve(fallback)
+      end
+      return Promise.reject("No OpenCode session found. Start one in the TUI.")
+    end)
   end)
 end
 
